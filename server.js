@@ -282,24 +282,37 @@ app.get('/api/progress', (req, res) => {
 
     const isAudio = audio === 'true';
     const q = quality || '720';
-    const formatArg = isAudio
-        ? 'bestaudio/best'
-        : `bestvideo[height<=${q}]+bestaudio/best[height<=${q}]/best`;
     const ext = isAudio ? 'mp3' : 'mp4';
 
     // Use a unique tmp path per request
     const token = Date.now() + '-' + Math.random().toString(36).slice(2);
     const tmpPath = `/tmp/ytdl-${token}.${ext}`;
 
-    const args = [
-        '--no-playlist',
-        '-f', formatArg,
-        '--merge-output-format', ext,
-        '--newline',
-        '--progress',
-        '-o', tmpPath,
-        url,
-    ];
+    let args;
+    if (isAudio) {
+        args = [
+            '--no-playlist',
+            '-f', 'bestaudio/best',
+            '--extract-audio',
+            '--audio-format', 'mp3',
+            '--audio-quality', '0',
+            '--newline',
+            '--progress',
+            '-o', tmpPath,
+            url,
+        ];
+    } else {
+        const formatArg = `bestvideo[height<=${q}]+bestaudio/best[height<=${q}]/best`;
+        args = [
+            '--no-playlist',
+            '-f', formatArg,
+            '--merge-output-format', 'mp4',
+            '--newline',
+            '--progress',
+            '-o', tmpPath,
+            url,
+        ];
+    }
 
     const proc = spawn('yt-dlp', args);
 

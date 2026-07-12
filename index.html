@@ -36,10 +36,62 @@
                 </div>
             </div>
 
-            <!-- Loading -->
-            <div id="loading" class="loading hidden">
-                <span class="spinner"></span>
-                <span>Fetching content…</span>
+            <!-- Loading shimmer — single video -->
+            <div id="shimmer-single" class="content-card hidden" aria-hidden="true">
+                <div class="shimmer-hero">
+                    <div class="shimmer-thumb shimmer"></div>
+                    <div class="shimmer-meta">
+                        <div class="shimmer-line shimmer" style="width:52px;height:10px;border-radius:6px;"></div>
+                        <div class="shimmer-line shimmer" style="width:90%;height:14px;margin-top:8px;"></div>
+                    </div>
+                </div>
+                <div class="shimmer-pills shimmer"></div>
+                <div class="shimmer-btn shimmer"></div>
+            </div>
+
+            <!-- Loading shimmer — playlist -->
+            <div id="shimmer-playlist" class="content-card hidden" aria-hidden="true">
+                <div class="shimmer-header">
+                    <div class="shimmer-line shimmer" style="width:110px;height:14px;"></div>
+                    <div class="shimmer-line shimmer" style="width:32px;height:20px;border-radius:20px;"></div>
+                </div>
+                <div class="shimmer-pills shimmer"></div>
+                <div class="shimmer-select shimmer"></div>
+                <div class="shimmer-rows">
+                    <div class="shimmer-row">
+                        <div class="shimmer-check shimmer"></div>
+                        <div class="shimmer-rowthumb shimmer"></div>
+                        <div class="shimmer-rowinfo">
+                            <div class="shimmer-line shimmer" style="width:75%;height:13px;"></div>
+                            <div class="shimmer-line shimmer" style="width:36px;height:10px;margin-top:6px;"></div>
+                        </div>
+                    </div>
+                    <div class="shimmer-row">
+                        <div class="shimmer-check shimmer"></div>
+                        <div class="shimmer-rowthumb shimmer"></div>
+                        <div class="shimmer-rowinfo">
+                            <div class="shimmer-line shimmer" style="width:60%;height:13px;"></div>
+                            <div class="shimmer-line shimmer" style="width:40px;height:10px;margin-top:6px;"></div>
+                        </div>
+                    </div>
+                    <div class="shimmer-row">
+                        <div class="shimmer-check shimmer"></div>
+                        <div class="shimmer-rowthumb shimmer"></div>
+                        <div class="shimmer-rowinfo">
+                            <div class="shimmer-line shimmer" style="width:85%;height:13px;"></div>
+                            <div class="shimmer-line shimmer" style="width:30px;height:10px;margin-top:6px;"></div>
+                        </div>
+                    </div>
+                    <div class="shimmer-row">
+                        <div class="shimmer-check shimmer"></div>
+                        <div class="shimmer-rowthumb shimmer"></div>
+                        <div class="shimmer-rowinfo">
+                            <div class="shimmer-line shimmer" style="width:50%;height:13px;"></div>
+                            <div class="shimmer-line shimmer" style="width:44px;height:10px;margin-top:6px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="shimmer-btn shimmer"></div>
             </div>
 
             <!-- Playlist Section -->
@@ -52,19 +104,40 @@
                     <span class="badge" id="total-count">0</span>
                 </div>
 
-                <div class="quality-row">
-                    <span class="quality-label">Quality</span>
-                    <div class="quality-pills">
-                        <input type="radio" name="quality" id="q-1080" value="1080">
-                        <label for="q-1080">1080p</label>
-                        <input type="radio" name="quality" id="q-720" value="720" checked>
-                        <label for="q-720">720p</label>
-                        <input type="radio" name="quality" id="q-480" value="480">
-                        <label for="q-480">480p</label>
-                        <input type="radio" name="quality" id="q-360" value="360">
-                        <label for="q-360">360p</label>
-                        <input type="radio" name="quality" id="q-audio" value="audio">
-                        <label for="q-audio"><i class="fas fa-music"></i> Audio</label>
+                <div class="quality-section">
+                    <div class="format-tabs" id="pl-format-tabs">
+                        <button class="fmt-tab active" data-fmt="video">
+                            <i class="fas fa-film"></i> Video
+                        </button>
+                        <button class="fmt-tab" data-fmt="audio">
+                            <i class="fas fa-music"></i> Audio
+                        </button>
+                    </div>
+                    <div class="quality-row" id="pl-video-row">
+                        <span class="quality-label">Quality</span>
+                        <div class="quality-pills">
+                            <input type="radio" name="quality" id="q-1080" value="1080">
+                            <label for="q-1080">1080p</label>
+                            <input type="radio" name="quality" id="q-720" value="720" checked>
+                            <label for="q-720">720p</label>
+                            <input type="radio" name="quality" id="q-480" value="480">
+                            <label for="q-480">480p</label>
+                            <input type="radio" name="quality" id="q-360" value="360">
+                            <label for="q-360">360p</label>
+                        </div>
+                    </div>
+                    <div class="quality-row hidden" id="pl-audio-row">
+                        <span class="quality-label">Bitrate</span>
+                        <div class="quality-pills">
+                            <input type="radio" name="quality-audio" id="qa-320" value="320k">
+                            <label for="qa-320">320k</label>
+                            <input type="radio" name="quality-audio" id="qa-192" value="192k" checked>
+                            <label for="qa-192">192k</label>
+                            <input type="radio" name="quality-audio" id="qa-128" value="128k">
+                            <label for="qa-128">128k</label>
+                            <input type="radio" name="quality-audio" id="qa-96" value="96k">
+                            <label for="qa-96">96k</label>
+                        </div>
                     </div>
                 </div>
 
@@ -79,10 +152,16 @@
 
                 <div id="playlist-items"></div>
 
-                <button id="download-selected-btn" class="btn-dl">
-                    <i class="fas fa-download"></i>
-                    <span>Download Selected</span>
-                </button>
+                <div class="btn-row">
+                    <button id="deselect-btn" class="btn-ghost">
+                        <i class="fas fa-xmark"></i>
+                        <span>Clear</span>
+                    </button>
+                    <button id="download-selected-btn" class="btn-dl">
+                        <i class="fas fa-download"></i>
+                        <span>Download Selected</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Single Section -->
@@ -97,23 +176,44 @@
                     </div>
                 </div>
 
-                <div class="quality-row">
-                    <span class="quality-label">Quality</span>
-                    <div class="quality-pills">
-                        <input type="radio" name="single-quality" id="sq-1080" value="1080">
-                        <label for="sq-1080">1080p</label>
-                        <input type="radio" name="single-quality" id="sq-720" value="720" checked>
-                        <label for="sq-720">720p</label>
-                        <input type="radio" name="single-quality" id="sq-480" value="480">
-                        <label for="sq-480">480p</label>
-                        <input type="radio" name="single-quality" id="sq-360" value="360">
-                        <label for="sq-360">360p</label>
-                        <input type="radio" name="single-quality" id="sq-audio" value="audio">
-                        <label for="sq-audio"><i class="fas fa-music"></i> Audio</label>
+                <div class="quality-section">
+                    <div class="format-tabs" id="sq-format-tabs">
+                        <button class="fmt-tab active" data-fmt="video">
+                            <i class="fas fa-film"></i> Video
+                        </button>
+                        <button class="fmt-tab" data-fmt="audio">
+                            <i class="fas fa-music"></i> Audio
+                        </button>
+                    </div>
+                    <div class="quality-row" id="sq-video-row">
+                        <span class="quality-label">Quality</span>
+                        <div class="quality-pills">
+                            <input type="radio" name="single-quality" id="sq-1080" value="1080">
+                            <label for="sq-1080">1080p</label>
+                            <input type="radio" name="single-quality" id="sq-720" value="720" checked>
+                            <label for="sq-720">720p</label>
+                            <input type="radio" name="single-quality" id="sq-480" value="480">
+                            <label for="sq-480">480p</label>
+                            <input type="radio" name="single-quality" id="sq-360" value="360">
+                            <label for="sq-360">360p</label>
+                        </div>
+                    </div>
+                    <div class="quality-row hidden" id="sq-audio-row">
+                        <span class="quality-label">Bitrate</span>
+                        <div class="quality-pills">
+                            <input type="radio" name="single-quality-audio" id="sqa-320" value="320k">
+                            <label for="sqa-320">320k</label>
+                            <input type="radio" name="single-quality-audio" id="sqa-192" value="192k" checked>
+                            <label for="sqa-192">192k</label>
+                            <input type="radio" name="single-quality-audio" id="sqa-128" value="128k">
+                            <label for="sqa-128">128k</label>
+                            <input type="radio" name="single-quality-audio" id="sqa-96" value="96k">
+                            <label for="sqa-96">96k</label>
+                        </div>
                     </div>
                 </div>
 
-                <button id="download-single-btn" class="btn-dl">
+                <button id="download-single-btn" class="btn-dl" style="width:100%">
                     <i class="fas fa-download"></i>
                     <span>Download</span>
                 </button>

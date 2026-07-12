@@ -1,6 +1,7 @@
 const urlInput       = document.getElementById('url-input');
 const fetchBtn       = document.getElementById('fetch-btn');
-const loading        = document.getElementById('loading');
+const shimmerSingle  = document.getElementById('shimmer-single');
+const shimmerPlaylist = document.getElementById('shimmer-playlist');
 const playlistSection = document.getElementById('playlist-section');
 const singleSection  = document.getElementById('single-section');
 const playlistItems  = document.getElementById('playlist-items');
@@ -8,6 +9,7 @@ const selectAllCheckbox = document.getElementById('select-all');
 const selectedCount  = document.getElementById('selected-count');
 const totalCount     = document.getElementById('total-count');
 const downloadSelectedBtn = document.getElementById('download-selected-btn');
+const deselectBtn         = document.getElementById('deselect-btn');
 const downloadSingleBtn   = document.getElementById('download-single-btn');
 const downloadsEl    = document.getElementById('downloads');
 const downloadsEmpty = document.getElementById('downloads-empty');
@@ -33,8 +35,24 @@ function getSelectedSingleQuality() {
     return el ? el.value : '720';
 }
 
+function hideShimmers() {
+    shimmerSingle.classList.add('hidden');
+    shimmerPlaylist.classList.add('hidden');
+}
+
+function showShimmer(isPlaylist) {
+    playlistSection.classList.add('hidden');
+    singleSection.classList.add('hidden');
+    if (isPlaylist) {
+        shimmerSingle.classList.add('hidden');
+        shimmerPlaylist.classList.remove('hidden');
+    } else {
+        shimmerPlaylist.classList.add('hidden');
+        shimmerSingle.classList.remove('hidden');
+    }
+}
+
 function updateDlCount(delta) {
-    dlCount = Math.max(0, dlCount + delta);
     dlCountBadge.textContent = dlCount;
     if (dlCount > 0) {
         downloadsEmpty.classList.add('hidden');
@@ -257,9 +275,11 @@ async function fetchContent() {
     const url = urlInput.value.trim();
     if (!url) return;
 
+    const isPlaylist = url.includes('list=');
+
     playlistSection.classList.add('hidden');
     singleSection.classList.add('hidden');
-    loading.classList.remove('hidden');
+    showShimmer(isPlaylist);
     fetchBtn.disabled = true;
 
     try {
@@ -279,7 +299,7 @@ async function fetchContent() {
     } catch (err) {
         alert('Error: ' + err.message);
     } finally {
-        loading.classList.add('hidden');
+        hideShimmers();
         fetchBtn.disabled = false;
     }
 }
@@ -297,6 +317,15 @@ selectAllCheckbox.addEventListener('change', () => {
         cb.checked = selectAllCheckbox.checked;
         cb.closest('.playlist-item').classList.toggle('is-checked', cb.checked);
     });
+    updateSelectedCount();
+});
+
+deselectBtn.addEventListener('click', () => {
+    document.querySelectorAll('.item-checkbox').forEach(cb => {
+        cb.checked = false;
+        cb.closest('.playlist-item').classList.remove('is-checked');
+    });
+    selectAllCheckbox.checked = false;
     updateSelectedCount();
 });
 
