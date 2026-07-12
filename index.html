@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Downloader</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app">
+
+        <!-- LEFT COLUMN -->
+        <div class="col-left">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-icon">
+                    <i class="fas fa-cloud-arrow-down"></i>
+                </div>
+                <div>
+                    <h1>Downloader</h1>
+                    <p class="subtitle">Videos, music &amp; playlists</p>
+                </div>
+            </div>
+
+            <!-- URL Input -->
+            <div class="input-card">
+                <div class="input-wrap" id="input-wrap">
+                    <i class="fas fa-link input-icon"></i>
+                    <input type="url" id="url-input" placeholder="Paste a YouTube URL…" autocomplete="off" spellcheck="false">
+                    <button id="fetch-btn" aria-label="Fetch">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div id="loading" class="loading hidden">
+                <span class="spinner"></span>
+                <span>Fetching content…</span>
+            </div>
+
+            <!-- Playlist Section -->
+            <div id="playlist-section" class="content-card hidden">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-list"></i>
+                        <span id="playlist-title-text">Playlist</span>
+                    </div>
+                    <span class="badge" id="total-count">0</span>
+                </div>
+
+                <div class="quality-row">
+                    <span class="quality-label">Quality</span>
+                    <div class="quality-pills">
+                        <input type="radio" name="quality" id="q-1080" value="1080">
+                        <label for="q-1080">1080p</label>
+                        <input type="radio" name="quality" id="q-720" value="720" checked>
+                        <label for="q-720">720p</label>
+                        <input type="radio" name="quality" id="q-480" value="480">
+                        <label for="q-480">480p</label>
+                        <input type="radio" name="quality" id="q-360" value="360">
+                        <label for="q-360">360p</label>
+                        <input type="radio" name="quality" id="q-audio" value="audio">
+                        <label for="q-audio"><i class="fas fa-music"></i> Audio</label>
+                    </div>
+                </div>
+
+                <div class="select-row">
+                    <label class="check-label">
+                        <input type="checkbox" id="select-all">
+                        <span class="checkmark"></span>
+                        <span>Select all</span>
+                    </label>
+                    <span class="sel-count"><span id="selected-count">0</span> selected</span>
+                </div>
+
+                <div id="playlist-items"></div>
+
+                <button id="download-selected-btn" class="btn-dl">
+                    <i class="fas fa-download"></i>
+                    <span>Download Selected</span>
+                </button>
+            </div>
+
+            <!-- Single Section -->
+            <div id="single-section" class="content-card hidden">
+                <div class="single-hero">
+                    <div id="single-thumb" class="single-thumb-wrap">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                    <div class="single-meta">
+                        <p class="single-label">Video</p>
+                        <p id="single-name" class="single-title">—</p>
+                    </div>
+                </div>
+
+                <div class="quality-row">
+                    <span class="quality-label">Quality</span>
+                    <div class="quality-pills">
+                        <input type="radio" name="single-quality" id="sq-1080" value="1080">
+                        <label for="sq-1080">1080p</label>
+                        <input type="radio" name="single-quality" id="sq-720" value="720" checked>
+                        <label for="sq-720">720p</label>
+                        <input type="radio" name="single-quality" id="sq-480" value="480">
+                        <label for="sq-480">480p</label>
+                        <input type="radio" name="single-quality" id="sq-360" value="360">
+                        <label for="sq-360">360p</label>
+                        <input type="radio" name="single-quality" id="sq-audio" value="audio">
+                        <label for="sq-audio"><i class="fas fa-music"></i> Audio</label>
+                    </div>
+                </div>
+
+                <button id="download-single-btn" class="btn-dl">
+                    <i class="fas fa-download"></i>
+                    <span>Download</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN — Downloads -->
+        <div class="col-right">
+            <div class="downloads-panel">
+                <div class="downloads-header">
+                    <div class="card-title">
+                        <i class="fas fa-arrow-down-to-line"></i>
+                        <span>Downloads</span>
+                    </div>
+                    <span class="badge badge-ghost" id="dl-count">0</span>
+                </div>
+                <div class="downloads-empty" id="downloads-empty">
+                    <i class="fas fa-inbox"></i>
+                    <p>No downloads yet</p>
+                    <span>Paste a URL on the left to get started</span>
+                </div>
+                <div id="downloads"></div>
+            </div>
+        </div>
+
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
