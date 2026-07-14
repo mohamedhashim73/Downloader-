@@ -147,7 +147,37 @@
                         <span class="checkmark"></span>
                         <span>Select all</span>
                     </label>
-                    <span class="sel-count"><span id="selected-count">0</span> selected</span>
+                    <div class="select-row-right">
+                        <span class="sel-count"><span id="selected-count">0</span> selected</span>
+                        <button id="range-toggle-btn" class="range-toggle" title="Select by range">
+                            <i class="fas fa-sliders"></i>
+                            <span>Range</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Range Panel -->
+                <div id="range-panel" class="range-panel hidden">
+                    <div class="range-label">
+                        <i class="fas fa-list-ol"></i>
+                        <span>Select items from number to number</span>
+                    </div>
+                    <div class="range-inputs">
+                        <div class="range-field">
+                            <label for="range-from">From</label>
+                            <input type="number" id="range-from" min="1" placeholder="1">
+                        </div>
+                        <div class="range-divider">—</div>
+                        <div class="range-field">
+                            <label for="range-to">To</label>
+                            <input type="number" id="range-to" min="1" placeholder="10">
+                        </div>
+                        <button id="range-apply-btn" class="range-apply">
+                            <i class="fas fa-check"></i>
+                            Apply
+                        </button>
+                    </div>
+                    <p id="range-error" class="range-error hidden"></p>
                 </div>
 
                 <div id="playlist-items"></div>
@@ -213,7 +243,7 @@
                     </div>
                 </div>
 
-                <button id="download-single-btn" class="btn-dl" style="width:100%">
+                <button id="download-single-btn" class="btn-dl">
                     <i class="fas fa-download"></i>
                     <span>Download</span>
                 </button>
@@ -228,7 +258,12 @@
                         <i class="fas fa-arrow-down-to-line"></i>
                         <span>Downloads</span>
                     </div>
-                    <span class="badge badge-ghost" id="dl-count">0</span>
+                    <div class="downloads-header-right">
+                        <span class="badge badge-ghost" id="dl-count">0</span>
+                        <button id="clear-history-btn" class="clear-history-btn" title="Clear finished downloads">
+                            <i class="fas fa-broom"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="downloads-empty" id="downloads-empty">
                     <i class="fas fa-inbox"></i>

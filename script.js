@@ -10,10 +10,17 @@ const selectedCount  = document.getElementById('selected-count');
 const totalCount     = document.getElementById('total-count');
 const downloadSelectedBtn = document.getElementById('download-selected-btn');
 const deselectBtn         = document.getElementById('deselect-btn');
+const rangeToggleBtn      = document.getElementById('range-toggle-btn');
+const rangePanel          = document.getElementById('range-panel');
+const rangeFrom           = document.getElementById('range-from');
+const rangeTo             = document.getElementById('range-to');
+const rangeApplyBtn       = document.getElementById('range-apply-btn');
+const rangeError          = document.getElementById('range-error');
 const downloadSingleBtn   = document.getElementById('download-single-btn');
 const downloadsEl    = document.getElementById('downloads');
 const downloadsEmpty = document.getElementById('downloads-empty');
 const dlCountBadge   = document.getElementById('dl-count');
+const clearHistoryBtn = document.getElementById('clear-history-btn');
 const singleName     = document.getElementById('single-name');
 const singleThumb    = document.getElementById('single-thumb');
 
@@ -65,11 +72,15 @@ function showShimmer(isPlaylist) {
 }
 
 function updateDlCount(delta) {
+    dlCount = Math.max(0, dlCount + delta);
     dlCountBadge.textContent = dlCount;
     if (dlCount > 0) {
         downloadsEmpty.classList.add('hidden');
     } else {
-        downloadsEmpty.classList.remove('hidden');
+        // only show empty if no cards remain at all
+        if (!downloadsEl.querySelector('.download-item')) {
+            downloadsEmpty.classList.remove('hidden');
+        }
     }
 }
 
@@ -100,6 +111,15 @@ function showPlaylist(data) {
     totalCount.textContent  = data.count;
     selectedCount.textContent = '0';
     selectAllCheckbox.checked = false;
+
+    // Reset range panel
+    rangePanel.classList.add('hidden');
+    rangeToggleBtn.classList.remove('active');
+    rangeFrom.value = '';
+    rangeTo.value   = '';
+    rangeFrom.classList.remove('input-error');
+    rangeTo.classList.remove('input-error');
+    rangeError.classList.add('hidden');
 
     data.videos.forEach((video, index) => {
         const div = document.createElement('div');
@@ -166,7 +186,10 @@ function createDownloadItem(name, isAudio) {
                 <div class="dl-name" title="${name}">${name}</div>
                 <div class="dl-meta">Starting…</div>
             </div>
-            <button class="dl-cancel" title="Cancel"><i class="fas fa-xmark"></i></button>
+            <div class="dl-actions">
+                <button class="dl-pause" title="Pause"><i class="fas fa-pause"></i></button>
+                <button class="dl-cancel" title="Cancel"><i class="fas fa-xmark"></i></button>
+            </div>
         </div>
         <div class="dl-progress-wrap">
             <div class="progress-bar"><div class="progress"></div></div>
@@ -214,6 +237,7 @@ function setItemProgress(item, percent, meta, state) {
 function startDownload(videoUrl, name, quality, isAudio) {
     const item      = createDownloadItem(name, isAudio);
     const cancelBtn = item.querySelector('.dl-cancel');
+    const pauseBtn  = item.querySelector('.dl-pause');
 
     const params = new URLSearchParams({ url: videoUrl, quality, audio: isAudio, title: name });
     const evtSource = new EventSource(`${API}/api/progress?${params}`);
@@ -221,17 +245,55 @@ function startDownload(videoUrl, name, quality, isAudio) {
     let downloadToken = null;
     let cancelled     = false;
     let finished      = false;
+    let paused        = false;
 
     function finish() {
         finished = true;
+        item.dataset.finished = 'true';
+        pauseBtn.disabled = true;
         updateDlCount(-1);
+    }
+
+    function togglePause() {
+        if (!downloadToken || finished || cancelled) return;
+        paused = !paused;
+        if (paused) {
+            pauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            pauseBtn.title = 'Resume';
+            pauseBtn.classList.add('is-paused');
+            item.querySelector('.dl-meta').textContent = 'Paused';
+            fetch(`${API}/api/pause`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: downloadToken }),
+            }).catch(() => {});
+        } else {
+            pauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            pauseBtn.title = 'Pause';
+            pauseBtn.classList.remove('is-paused');
+            item.querySelector('.dl-meta').textContent = 'Resuming…';
+            fetch(`${API}/api/resume`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: downloadToken }),
+            }).catch(() => {});
+        }
     }
 
     function cancel() {
         if (cancelled || finished) return;
         cancelled = true;
+        // If paused, resume first so the process can be killed cleanly
+        if (paused) {
+            fetch(`${API}/api/resume`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: downloadToken }),
+            }).catch(() => {});
+        }
         evtSource.close();
         cancelBtn.disabled = true;
+        pauseBtn.disabled  = true;
         setItemProgress(item, 0, 'Cancelled', 'cancelled');
         finish();
 
@@ -244,13 +306,13 @@ function startDownload(videoUrl, name, quality, isAudio) {
         }
     }
 
+    pauseBtn.addEventListener('click',  (e) => { e.stopPropagation(); togglePause(); });
     cancelBtn.addEventListener('click', (e) => { e.stopPropagation(); cancel(); });
 
     evtSource.onmessage = (e) => {
         if (cancelled) return;
         const data = JSON.parse(e.data);
 
-        // Token received — cancel is now live
         if (data.started && data.token) {
             downloadToken = data.token;
             return;
@@ -259,6 +321,7 @@ function startDownload(videoUrl, name, quality, isAudio) {
         if (data.error) {
             evtSource.close();
             cancelBtn.disabled = true;
+            pauseBtn.disabled  = true;
             setItemProgress(item, 0, data.error.replace(/^ERROR:?\s*/i, '').slice(0, 80), 'error');
             finish();
             return;
@@ -267,6 +330,7 @@ function startDownload(videoUrl, name, quality, isAudio) {
         if (data.done && data.token) {
             evtSource.close();
             cancelBtn.disabled = true;
+            pauseBtn.disabled  = true;
             setItemProgress(item, 100, 'Saving…', null);
 
             const a = document.createElement('a');
@@ -284,6 +348,7 @@ function startDownload(videoUrl, name, quality, isAudio) {
         }
 
         if (data.percent !== undefined) {
+            if (paused) return; // don't overwrite "Paused" label
             const meta = data.speed
                 ? `${data.speed}  ·  ETA ${data.eta}`
                 : 'Downloading…';
@@ -295,6 +360,7 @@ function startDownload(videoUrl, name, quality, isAudio) {
         if (cancelled || finished) return;
         evtSource.close();
         cancelBtn.disabled = true;
+        pauseBtn.disabled  = true;
         setItemProgress(item, 0, 'Connection lost', 'error');
         finish();
     };
@@ -335,6 +401,67 @@ async function fetchContent() {
     }
 }
 
+// ── Range selection ───────────────────────────────────────
+
+function applyRange() {
+    const total = currentPlaylist.length;
+    const from  = parseInt(rangeFrom.value, 10);
+    const to    = parseInt(rangeTo.value, 10);
+
+    // Reset error state
+    rangeFrom.classList.remove('input-error');
+    rangeTo.classList.remove('input-error');
+    rangeError.classList.add('hidden');
+    rangeError.textContent = '';
+
+    // Validate
+    if (isNaN(from) || isNaN(to)) {
+        rangeError.textContent = 'Please enter both values.';
+        rangeError.classList.remove('hidden');
+        if (isNaN(from)) rangeFrom.classList.add('input-error');
+        if (isNaN(to))   rangeTo.classList.add('input-error');
+        return;
+    }
+    if (from < 1 || to < 1) {
+        rangeError.textContent = 'Numbers must be 1 or greater.';
+        rangeError.classList.remove('hidden');
+        if (from < 1) rangeFrom.classList.add('input-error');
+        if (to < 1)   rangeTo.classList.add('input-error');
+        return;
+    }
+    if (from > to) {
+        rangeError.textContent = '"From" must be less than or equal to "To".';
+        rangeError.classList.remove('hidden');
+        rangeFrom.classList.add('input-error');
+        rangeTo.classList.add('input-error');
+        return;
+    }
+    if (from > total || to > total) {
+        rangeError.textContent = `Playlist only has ${total} items.`;
+        rangeError.classList.remove('hidden');
+        if (from > total) rangeFrom.classList.add('input-error');
+        if (to > total)   rangeTo.classList.add('input-error');
+        return;
+    }
+
+    // Apply — indexes are 0-based, inputs are 1-based
+    document.querySelectorAll('.item-checkbox').forEach((cb, idx) => {
+        const inRange = idx >= (from - 1) && idx <= (to - 1);
+        cb.checked = inRange;
+        cb.closest('.playlist-item').classList.toggle('is-checked', inRange);
+    });
+
+    updateSelectedCount();
+
+    // Close panel after applying
+    rangePanel.classList.add('hidden');
+    rangeToggleBtn.classList.remove('active');
+
+    // Scroll list to first selected item
+    const firstSelected = playlistItems.querySelector('.playlist-item.is-checked');
+    if (firstSelected) firstSelected.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
 // ── Event listeners ───────────────────────────────────────
 
 // Format tabs
@@ -345,6 +472,29 @@ document.querySelectorAll('.fmt-tab').forEach(btn => {
         switchFormat(tabsId, format);
     });
 });
+
+// Range toggle
+rangeToggleBtn.addEventListener('click', () => {
+    const open = rangePanel.classList.toggle('hidden');
+    rangeToggleBtn.classList.toggle('active', !open);
+    if (!open) {
+        // opened — set smart defaults
+        const total = currentPlaylist.length;
+        if (!rangeFrom.value) rangeFrom.value = 1;
+        if (!rangeTo.value)   rangeTo.value   = Math.min(10, total);
+        rangeFrom.focus();
+    } else {
+        // closed — clear errors
+        rangeFrom.classList.remove('input-error');
+        rangeTo.classList.remove('input-error');
+        rangeError.classList.add('hidden');
+    }
+});
+
+// Apply range on button click or Enter key in inputs
+rangeApplyBtn.addEventListener('click', applyRange);
+rangeFrom.addEventListener('keydown', (e) => { if (e.key === 'Enter') rangeTo.focus(); });
+rangeTo.addEventListener('keydown',   (e) => { if (e.key === 'Enter') applyRange(); });
 
 fetchBtn.addEventListener('click', fetchContent);
 
@@ -382,10 +532,36 @@ downloadSelectedBtn.addEventListener('click', () => {
         const videoUrl = `https://www.youtube.com/watch?v=${video.id}`;
         startDownload(videoUrl, video.name, quality, isAudio);
     });
+
+    // Clear selection after queueing all downloads
+    document.querySelectorAll('.item-checkbox').forEach(cb => {
+        cb.checked = false;
+        cb.closest('.playlist-item').classList.remove('is-checked');
+    });
+    selectAllCheckbox.checked = false;
+    updateSelectedCount();
 });
 
 downloadSingleBtn.addEventListener('click', () => {
     const quality = getSelectedSingleQuality();
     const isAudio = sqFormat === 'audio';
     startDownload(currentSingleUrl, singleName.textContent, quality, isAudio);
+});
+
+// Clear finished downloads (completed, cancelled, errored)
+clearHistoryBtn.addEventListener('click', () => {
+    const finished = downloadsEl.querySelectorAll('.download-item[data-finished="true"]');
+    finished.forEach(item => {
+        item.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(12px)';
+        setTimeout(() => item.remove(), 200);
+    });
+
+    // Show empty state if nothing left
+    setTimeout(() => {
+        if (!downloadsEl.querySelector('.download-item')) {
+            downloadsEmpty.classList.remove('hidden');
+        }
+    }, 250);
 });

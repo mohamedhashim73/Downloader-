@@ -224,7 +224,7 @@ input[type="url"]::placeholder { color: var(--text-3); }
 
 .shimmer-btn { height: 44px; border-radius: 10px; width: 100%; }
 
-/* ── Content Cards ── */
+/* ── Content Cards — flex layout for bottom-sticky buttons ── */
 .content-card {
     background: var(--surface2);
     border: 1px solid var(--border);
@@ -427,6 +427,157 @@ input[type="url"]::placeholder { color: var(--text-3); }
 
 .sel-count { font-size: 12px; color: var(--text-3); }
 
+/* ── Select row right side ── */
+.select-row-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ── Range toggle button ── */
+.range-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-2);
+    font-size: 11px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.range-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
+}
+
+.range-toggle.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
+}
+
+/* ── Range Panel ── */
+.range-panel {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex-shrink: 0;
+    animation: slideUp 0.18s ease;
+}
+
+.range-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--text-2);
+}
+
+.range-label i { color: var(--accent); font-size: 11px; }
+
+.range-inputs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.range-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.range-field label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-3);
+}
+
+.range-field input[type="number"] {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    /* hide number spinners */
+    -moz-appearance: textfield;
+}
+
+.range-field input[type="number"]::-webkit-outer-spin-button,
+.range-field input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+.range-field input[type="number"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.range-field input[type="number"].input-error {
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px rgba(233,69,96,0.15);
+}
+
+.range-divider {
+    font-size: 16px;
+    color: var(--text-3);
+    padding-top: 18px;
+    flex-shrink: 0;
+}
+
+.range-apply {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 16px;
+    height: 38px;
+    margin-top: 18px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    flex-shrink: 0;
+    white-space: nowrap;
+    transition: background 0.15s, transform 0.1s;
+    box-shadow: 0 3px 10px var(--accent-glow);
+}
+
+.range-apply:hover  { background: var(--accent-h); }
+.range-apply:active { transform: scale(0.96); }
+
+.range-error {
+    font-size: 11px;
+    color: var(--red);
+    font-weight: 500;
+}
+
 /* ── Playlist Items — flex-grow to fill card, scroll inside ── */
 #playlist-items {
     flex: 1;
@@ -569,16 +720,17 @@ input[type="url"]::placeholder { color: var(--text-3); }
     color: var(--text);
 }
 
-/* ── Buttons ── */
+/* ── Buttons — sticky at bottom ── */
 .btn-row {
     display: flex;
     gap: 10px;
     flex-shrink: 0;
+    margin-top: auto;    /* push to bottom */
 }
 
 .btn-dl {
-    flex: 1;
-    padding: 14px 18px;
+    width: 100%;
+    padding: 0 18px;
     border: none;
     border-radius: 10px;
     background: var(--accent);
@@ -591,17 +743,29 @@ input[type="url"]::placeholder { color: var(--text-3); }
     align-items: center;
     justify-content: center;
     gap: 8px;
+    flex-shrink: 0;
+    flex-grow: 0;       /* never grow vertically in a flex column */
+    height: 48px;       /* fixed height always */
     transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
     box-shadow: 0 4px 14px var(--accent-glow);
-    min-height: 48px;
+}
+
+/* inside .btn-row, each button shares width equally */
+.btn-row .btn-dl,
+.btn-row .btn-ghost {
+    flex: 1 0 0;
+    width: auto;
 }
 
 .btn-dl:hover  { background: var(--accent-h); box-shadow: 0 6px 20px rgba(233,69,96,0.35); }
 .btn-dl:active { transform: scale(0.98); }
 
+#download-single-btn {
+    margin-top: auto;    /* push single button to bottom */
+}
+
 .btn-ghost {
-    flex: 1;
-    padding: 14px 18px;
+    padding: 0 18px;
     border: 1px solid var(--border);
     border-radius: 10px;
     background: transparent;
@@ -615,7 +779,9 @@ input[type="url"]::placeholder { color: var(--text-3); }
     justify-content: center;
     gap: 7px;
     white-space: nowrap;
-    min-height: 48px;
+    flex-shrink: 0;
+    flex-grow: 0;
+    height: 48px;
     transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
@@ -657,6 +823,37 @@ input[type="url"]::placeholder { color: var(--text-3); }
     padding-bottom: 14px;
     flex-shrink: 0;
 }
+
+.downloads-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.clear-history-btn {
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-3);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.clear-history-btn:hover {
+    background: rgba(233,69,96,0.10);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.clear-history-btn:active { transform: scale(0.92); }
 
 /* ── Empty State ── */
 .downloads-empty {
@@ -737,14 +934,22 @@ input[type="url"]::placeholder { color: var(--text-3); }
 .dl-meta.success    { color: var(--green); }
 .dl-meta.error      { color: var(--red); }
 
-.dl-cancel {
+.dl-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.dl-pause, .dl-cancel {
     width: 28px;
     height: 28px;
     border: 1px solid var(--border);
     border-radius: 7px;
     background: transparent;
     color: var(--text-3);
-    font-size: 12px;
+    font-size: 11px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -752,10 +957,15 @@ input[type="url"]::placeholder { color: var(--text-3); }
     flex-shrink: 0;
     transition: all 0.15s;
     padding: 0;
-    margin-top: 2px;
 }
 
-.dl-cancel:hover    { background: rgba(233,69,96,0.12); border-color: var(--accent); color: var(--accent); }
+.dl-pause:hover  { background: rgba(255,200,0,0.10); border-color: #f0a500; color: #f0a500; }
+.dl-cancel:hover { background: rgba(233,69,96,0.12); border-color: var(--accent); color: var(--accent); }
+
+.dl-pause.is-paused  { border-color: #f0a500; color: #f0a500; background: rgba(255,200,0,0.08); }
+.dl-pause.is-paused:hover { background: rgba(255,200,0,0.18); }
+
+.dl-pause:disabled,
 .dl-cancel:disabled { opacity: 0; pointer-events: none; }
 
 /* ── Progress ── */

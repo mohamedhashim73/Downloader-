@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const https = require('https');
-const { spawn } = require('child_process');
+const { spawn, execFile } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -10,6 +10,49 @@ const readyFiles = new Map();
 
 // Track active yt-dlp processes: token -> { proc, tmpPath }
 const activeDownloads = new Map();
+
+// ── Cookie management ──────────────────────────────────────────────────────
+// Export Chrome cookies once at startup and refresh every 30 min.
+// Using a file avoids hitting the locked SQLite DB on every download request.
+const COOKIE_FILE = '/tmp/yt-dlp-cookies.txt';
+let cookieFileReady = false;
+
+function refreshCookies() {
+    return new Promise((resolve) => {
+        const proc = execFile('yt-dlp', [
+            '--cookies-from-browser', 'chrome',
+            '--cookies', COOKIE_FILE,
+            '--skip-download',
+            '--no-playlist',
+            'https://www.youtube.com/',
+        ], { timeout: 30000 }, (err) => {
+            if (err) {
+                console.warn('[cookies] Refresh failed:', err.message.slice(0, 80));
+                // Still mark ready if the file already exists from a prior run
+                if (fs.existsSync(COOKIE_FILE)) {
+                    cookieFileReady = true;
+                    console.log('[cookies] Using existing cookie file.');
+                }
+            } else {
+                cookieFileReady = true;
+                console.log('[cookies] Cookie file refreshed:', COOKIE_FILE);
+            }
+            resolve();
+        });
+    });
+}
+
+// Refresh on startup, then every 30 minutes
+refreshCookies();
+setInterval(refreshCookies, 30 * 60 * 1000);
+
+function getCookieArgs() {
+    if (cookieFileReady && fs.existsSync(COOKIE_FILE)) {
+        return ['--cookies', COOKIE_FILE];
+    }
+    // Fallback to live browser read if file not ready yet
+    return ['--cookies-from-browser', 'chrome'];
+}
 
 const app = express();
 app.use(cors());
@@ -288,6 +331,9 @@ app.get('/api/progress', (req, res) => {
     const token = Date.now() + '-' + Math.random().toString(36).slice(2);
     const tmpPath = `/tmp/ytdl-${token}.${ext}`;
 
+    // Cookie args — use pre-exported file (avoids locked Chrome DB during downloads)
+    const cookieArgs = getCookieArgs();
+
     let args;
     if (isAudio) {
         args = [
@@ -296,6 +342,10 @@ app.get('/api/progress', (req, res) => {
             '--extract-audio',
             '--audio-format', 'mp3',
             '--audio-quality', '0',
+            ...cookieArgs,
+            '--extractor-retries', '3',
+            '--fragment-retries', '3',
+            '--retry-sleep', '2',
             '--newline',
             '--progress',
             '-o', tmpPath,
@@ -307,6 +357,10 @@ app.get('/api/progress', (req, res) => {
             '--no-playlist',
             '-f', formatArg,
             '--merge-output-format', 'mp4',
+            ...cookieArgs,
+            '--extractor-retries', '3',
+            '--fragment-retries', '3',
+            '--retry-sleep', '2',
             '--newline',
             '--progress',
             '-o', tmpPath,
@@ -381,7 +435,15 @@ app.get('/api/progress', (req, res) => {
     proc.stderr.on('data', d => {
         const txt = d.toString();
         console.error('[yt-dlp stderr]', txt.trim());
-        if (txt.includes('ERROR')) send({ error: txt.trim() });
+        if (txt.includes('ERROR')) {
+            let msg = txt.trim();
+            if (msg.includes('403')) {
+                msg = 'Access denied (403). YouTube blocked this video. Try opening YouTube in Chrome and signing in, then retry.';
+            } else {
+                msg = msg.replace(/^.*ERROR[:\s]*/i, '').slice(0, 120);
+            }
+            send({ error: msg });
+        }
     });
 
     proc.on('close', code => {
@@ -431,6 +493,34 @@ app.get('/api/progress', (req, res) => {
         activeDownloads.delete(token);
         proc.kill();
     });
+});
+
+// Pause an active download
+app.post('/api/pause', (req, res) => {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ error: 'Token required' });
+    const active = activeDownloads.get(token);
+    if (active && !active.paused) {
+        try {
+            active.proc.kill('SIGSTOP');
+            active.paused = true;
+        } catch (e) { /* ignore */ }
+    }
+    res.json({ ok: true });
+});
+
+// Resume a paused download
+app.post('/api/resume', (req, res) => {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ error: 'Token required' });
+    const active = activeDownloads.get(token);
+    if (active && active.paused) {
+        try {
+            active.proc.kill('SIGCONT');
+            active.paused = false;
+        } catch (e) { /* ignore */ }
+    }
+    res.json({ ok: true });
 });
 
 // Cancel an active download
