@@ -462,10 +462,8 @@ app.get('/api/progress', (req, res) => {
         }
 
         if (code === 0 && fs.existsSync(tmpPath)) {
-            // Build the nice display filename: "Title [720p].mp4"
-            const label = isAudio ? 'audio' : `${q}p`;
             const base = title ? safeFilename(title) : `video`;
-            const filename = `${base} [${label}].${ext}`;
+            const filename = `${base}.${ext}`;
 
             // Store so /api/download can serve it
             readyFiles.set(token, { filePath: tmpPath, filename });
