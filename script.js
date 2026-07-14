@@ -168,6 +168,9 @@ function updateSelectedCount() {
     selectedCount.textContent = checked;
     const total = document.querySelectorAll('.item-checkbox').length;
     selectAllCheckbox.checked = checked === total && total > 0;
+    const hasSelection = checked > 0;
+    downloadSelectedBtn.disabled = !hasSelection;
+    deselectBtn.disabled = !hasSelection;
 }
 
 // ── Download UI ───────────────────────────────────────────
