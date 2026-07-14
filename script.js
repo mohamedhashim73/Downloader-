@@ -22,17 +22,29 @@ const API = 'http://localhost:3000';
 let currentPlaylist  = [];
 let currentSingleUrl = '';
 let dlCount = 0;
+let plFormat = 'video';  // playlist format: 'video' or 'audio'
+let sqFormat = 'video';  // single format: 'video' or 'audio'
 
 // ── Helpers ──────────────────────────────────────────────
 
 function getSelectedQuality() {
-    const el = document.querySelector('input[name="quality"]:checked');
-    return el ? el.value : '720';
+    if (plFormat === 'audio') {
+        const el = document.querySelector('input[name="quality-audio"]:checked');
+        return el ? el.value : '192k';
+    } else {
+        const el = document.querySelector('input[name="quality"]:checked');
+        return el ? el.value : '720';
+    }
 }
 
 function getSelectedSingleQuality() {
-    const el = document.querySelector('input[name="single-quality"]:checked');
-    return el ? el.value : '720';
+    if (sqFormat === 'audio') {
+        const el = document.querySelector('input[name="single-quality-audio"]:checked');
+        return el ? el.value : '192k';
+    } else {
+        const el = document.querySelector('input[name="single-quality"]:checked');
+        return el ? el.value : '720';
+    }
 }
 
 function hideShimmers() {
@@ -59,6 +71,25 @@ function updateDlCount(delta) {
     } else {
         downloadsEmpty.classList.remove('hidden');
     }
+}
+
+// ── Tab switching ────────────────────────────────────────
+
+function switchFormat(tabsId, format) {
+    // Update state
+    if (tabsId === 'pl-format-tabs') plFormat = format;
+    if (tabsId === 'sq-format-tabs') sqFormat = format;
+
+    // Update UI
+    const tabs = document.getElementById(tabsId);
+    tabs.querySelectorAll('.fmt-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.fmt === format);
+    });
+
+    // Show/hide quality rows
+    const prefix = tabsId === 'pl-format-tabs' ? 'pl-' : 'sq-';
+    document.getElementById(prefix + 'video-row').classList.toggle('hidden', format !== 'video');
+    document.getElementById(prefix + 'audio-row').classList.toggle('hidden', format !== 'audio');
 }
 
 // ── Playlist / Single display ─────────────────────────────
@@ -306,6 +337,15 @@ async function fetchContent() {
 
 // ── Event listeners ───────────────────────────────────────
 
+// Format tabs
+document.querySelectorAll('.fmt-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tabsId = btn.closest('.format-tabs').id;
+        const format = btn.dataset.fmt;
+        switchFormat(tabsId, format);
+    });
+});
+
 fetchBtn.addEventListener('click', fetchContent);
 
 urlInput.addEventListener('keypress', (e) => {
@@ -334,18 +374,18 @@ downloadSelectedBtn.addEventListener('click', () => {
     if (!checked.length) return;
 
     const quality = getSelectedQuality();
-    const isAudio = quality === 'audio';
+    const isAudio = plFormat === 'audio';
 
     checked.forEach(cb => {
         const index    = parseInt(cb.id.replace('item-', ''));
         const video    = currentPlaylist[index];
         const videoUrl = `https://www.youtube.com/watch?v=${video.id}`;
-        startDownload(videoUrl, video.name, isAudio ? '0' : quality, isAudio);
+        startDownload(videoUrl, video.name, quality, isAudio);
     });
 });
 
 downloadSingleBtn.addEventListener('click', () => {
     const quality = getSelectedSingleQuality();
-    const isAudio = quality === 'audio';
-    startDownload(currentSingleUrl, singleName.textContent, isAudio ? '0' : quality, isAudio);
+    const isAudio = sqFormat === 'audio';
+    startDownload(currentSingleUrl, singleName.textContent, quality, isAudio);
 });
